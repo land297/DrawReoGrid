@@ -1,0 +1,110 @@
+Define function !!SIKABcreateGridNote() 
+	NEW NOTE
+	handle any
+		!!SIKABgridPathReturn = 'error;newNote'
+		return
+	endhandle
+	!note = !!ce
+	!sheetSize = !!ce.owner.size
+
+	
+	!file = object file(!!SIKABgridPath)
+	
+	if !file.Exists() then
+		do !row values !file.ReadFile()
+			!data = !row.split(';')
+			if !data[1] eq 'stra' then
+				!f = !data[2].split(' ')
+				!t = !data[3].split(' ')
+				NEW STRA
+				FPT x $!f[1] y $!f[2]
+				TPT x $!t[1] y $!t[2]
+				if !data[4] eq 'Dotted' then
+					NLStyle Dotted
+				elseif !data[4] eq 	'Dashed' then
+					NLStyle Dashed
+				
+				endif
+			elseif !data[1] eq 'text' then
+				NEW TEXP
+				!texp = !!ce
+				ALIGNMENT HBODY
+				!xy = !data[2].split(' ')
+				!btext = !data[3]
+				!cheitx = !data[6].Replace(',','.')
+				BTEXT '$!btext'
+				Cheitx '$!cheitx'
+				AT X $!xy[1] Y $!xy[2] 
+				var !extent extent btext
+				!extentCord = !extent.Split(' ')
+				if !data[7] ne '-' then
+					
+					if !data[7] eq 'center' then
+						!cellWidth = !data[4].Real()
+						!textWidth = !extentCord[6].Real() - !extentCord[2].Real()
+						!moveDist = !cellWidth / 2 - !textWidth / 2
+						BY X $!moveDist
+					
+					elseif !data[7] eq 'right' then
+						!cellWidth = !data[4].Real()
+						!textWidth = !extentCord[6].Real() - !extentCord[2].Real()
+						!moveDist = !cellWidth - !textWidth
+						BY X $!moveDist
+					
+					endif
+				endif
+				if !data[9] eq 'word-break' then
+					!cellWidth = !data[4].Real()
+					!textWidth = !extentCord[6].Real() - !extentCord[2].Real()
+					if !textWidth gt !cellWidth then
+						!words = !btext.split(' ')
+						!finalBtext = ''
+						NEW TEXP
+						Cheitx '$!cheitx'
+						!tempTexp = !!ce
+						--q var !words
+						do !i to !words.Size()
+								$!tempTexp
+								!newBtext = !finalBtext + !words[!i] + ' '
+								BTEXT '$!newBtext'
+								--q btext
+								var !extent extent btext
+								!extentCord = !extent.Split(' ')
+								!textWidth = !extentCord[6].Real() - !extentCord[2].Real()
+								--q var !extent
+								--q var !textWidth
+								--q var !cellWidth
+								--q var !newBtext
+								--$p -------------
+								if !textWidth gt !cellWidth then
+									!finalBtext = !finalBtext + '#/' + !words[!i] + ' '
+								
+								else
+									!finalBtext = !newBtext 
+								
+								endif
+								
+							
+								
+						
+						
+						enddo
+						$!tempTexp
+						DELETE TEXP
+						$!texp
+						BTEXT '$!finalBtext'
+					
+					
+					
+					endif
+				endif
+			endif
+		enddo
+	else
+		!!SIKABgridPathReturn = 'error;noFile'
+	endif
+	
+	$!note
+	--BY X ($!sheetSize[1] / 2 )
+	--BY Y ($!sheetSize[2] / 2 )
+EndFunction
